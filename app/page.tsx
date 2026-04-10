@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, Component, type ReactNode } from 'react'
+import PasswordGate from '@/components/PasswordGate'
 import StepIndicator from '@/components/StepIndicator'
 import Step1Import from '@/components/Step1Import'
 import Step2Review from '@/components/Step2Review'
@@ -57,6 +58,7 @@ export default function Home() {
   const allTickers = [...new Set(positions.map(p => p.ticker).filter(Boolean))]
 
   return (
+    <PasswordGate>
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-[var(--border)] bg-[var(--bg-surface)]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -113,5 +115,6 @@ export default function Home() {
         </p>
       </footer>
     </div>
+    </PasswordGate>
   )
 }
