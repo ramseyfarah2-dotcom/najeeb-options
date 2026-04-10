@@ -101,14 +101,44 @@ export default function ChatPanel() {
 
   return (
     <>
-      {/* FAB Button */}
+      {/* Bull mascot FAB */}
       {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 rounded-full bg-[var(--accent)] text-[var(--bg-base)] flex items-center justify-center shadow-lg hover:brightness-110 transition active:scale-95"
-        >
-          <MessageCircle className="w-6 h-6" />
-        </button>
+        <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end gap-2">
+          {/* Speech bubble */}
+          <div className="glass rounded-xl px-3 py-2 text-xs font-medium text-[var(--text-primary)] animate-fadeIn shadow-lg max-w-[160px] text-center relative">
+            Ask me about your portfolio
+            <div className="absolute -bottom-1.5 right-6 w-3 h-3 glass rotate-45" />
+          </div>
+          {/* Bull button */}
+          <button
+            onClick={() => setIsOpen(true)}
+            className="group w-16 h-16 rounded-full bg-gradient-to-br from-[var(--accent)] to-emerald-700 text-white flex items-center justify-center shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95 relative"
+          >
+            {/* Bull SVG */}
+            <svg viewBox="0 0 64 64" className="w-10 h-10" fill="none">
+              {/* Horns */}
+              <path d="M14 18C10 10 4 8 2 10C4 14 8 16 14 22" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+              <path d="M50 18C54 10 60 8 62 10C60 14 56 16 50 22" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+              {/* Head */}
+              <ellipse cx="32" cy="32" rx="18" ry="16" fill="white" opacity="0.95"/>
+              {/* Eyes */}
+              <circle cx="24" cy="28" r="3" fill="#1a1a2e"/>
+              <circle cx="40" cy="28" r="3" fill="#1a1a2e"/>
+              <circle cx="25" cy="27" r="1" fill="white"/>
+              <circle cx="41" cy="27" r="1" fill="white"/>
+              {/* Nostrils */}
+              <ellipse cx="28" cy="38" rx="2.5" ry="2" fill="#1a1a2e" opacity="0.3"/>
+              <ellipse cx="36" cy="38" rx="2.5" ry="2" fill="#1a1a2e" opacity="0.3"/>
+              {/* Smile */}
+              <path d="M26 42C28 45 36 45 38 42" stroke="#1a1a2e" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.5"/>
+              {/* Ears */}
+              <ellipse cx="14" cy="24" rx="4" ry="6" fill="white" opacity="0.9" transform="rotate(-15 14 24)"/>
+              <ellipse cx="50" cy="24" rx="4" ry="6" fill="white" opacity="0.9" transform="rotate(15 50 24)"/>
+            </svg>
+            {/* Pulse ring */}
+            <span className="absolute inset-0 rounded-full border-2 border-[var(--accent)] animate-ping opacity-20" />
+          </button>
+        </div>
       )}
 
       {/* Chat Panel */}
@@ -117,12 +147,18 @@ export default function ChatPanel() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-[var(--accent)]/15 flex items-center justify-center">
-                <MessageCircle className="w-4 h-4 text-[var(--accent)]" />
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--accent)] to-emerald-700 flex items-center justify-center text-white text-lg">
+                <svg viewBox="0 0 64 64" className="w-5 h-5" fill="none">
+                  <path d="M14 18C10 10 4 8 2 10C4 14 8 16 14 22" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                  <path d="M50 18C54 10 60 8 62 10C60 14 56 16 50 22" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                  <ellipse cx="32" cy="32" rx="18" ry="16" fill="white" opacity="0.95"/>
+                  <circle cx="24" cy="28" r="2.5" fill="#1a1a2e"/>
+                  <circle cx="40" cy="28" r="2.5" fill="#1a1a2e"/>
+                </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">AI Assistant</p>
-                <p className="text-[10px] text-[var(--text-muted)]">Ask about your positions</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Wall St. Bull</p>
+                <p className="text-[10px] text-[var(--text-muted)]">Your trading assistant</p>
               </div>
             </div>
             <button onClick={() => setIsOpen(false)} className="p-1.5 rounded-lg hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] transition">
