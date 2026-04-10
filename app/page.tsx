@@ -9,6 +9,7 @@ import ImportWizard from '@/components/ImportWizard'
 import Dashboard from '@/components/Dashboard'
 import Watchlist from '@/components/Watchlist'
 import Simulator from '@/components/Simulator'
+import FlowScanner from '@/components/FlowScanner'
 import TradeIdeas from '@/components/TradeIdeas'
 import ChatPanel from '@/components/ChatPanel'
 import { ToastProvider, useToast } from '@/components/Toasts'
@@ -245,6 +246,7 @@ function AppInner() {
                 <Simulator onGoToImport={() => setActiveView('import')} />
               )}
               {activeView === 'watchlist' && <Watchlist />}
+              {activeView === 'flow' && <FlowScanner />}
               {activeView === 'trade-ideas' && <TradeIdeas />}
             </div>
           </main>

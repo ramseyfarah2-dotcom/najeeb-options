@@ -1,6 +1,6 @@
 'use client'
 
-import { LayoutDashboard, Upload, Eye, Lightbulb, Grid3x3 } from 'lucide-react'
+import { LayoutDashboard, Upload, Eye, Lightbulb, Grid3x3, Radar } from 'lucide-react'
 import type { ActiveView } from '@/types'
 
 const NAV_ITEMS: { view: ActiveView; icon: typeof LayoutDashboard; label: string }[] = [
@@ -8,6 +8,7 @@ const NAV_ITEMS: { view: ActiveView; icon: typeof LayoutDashboard; label: string
   { view: 'import', icon: Upload, label: 'Import' },
   { view: 'simulator', icon: Grid3x3, label: 'Simulator' },
   { view: 'watchlist', icon: Eye, label: 'Watchlist' },
+  { view: 'flow', icon: Radar, label: 'Flow' },
   { view: 'trade-ideas', icon: Lightbulb, label: 'Ideas' },
 ]
 

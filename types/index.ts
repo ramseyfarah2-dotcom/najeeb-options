@@ -42,7 +42,7 @@ export interface HeatmapCell {
 }
 
 // Navigation
-export type ActiveView = 'dashboard' | 'import' | 'simulator' | 'watchlist' | 'trade-ideas'
+export type ActiveView = 'dashboard' | 'import' | 'simulator' | 'watchlist' | 'flow' | 'trade-ideas'
 
 // Watchlist
 export interface WatchlistItem {

@@ -3,6 +3,7 @@
     "app/api/research/route.ts": { "maxDuration": 60 },
     "app/api/parse-screenshot/route.ts": { "maxDuration": 30 },
     "app/api/chat/route.ts": { "maxDuration": 60 },
-    "app/api/trade-ideas/route.ts": { "maxDuration": 60 }
+    "app/api/trade-ideas/route.ts": { "maxDuration": 60 },
+    "app/api/options-flow/route.ts": { "maxDuration": 60 }
   }
 }
