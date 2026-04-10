@@ -68,7 +68,7 @@ function TickerRain() {
           style={{
             left: `${drop.left}%`,
             fontSize: `${drop.size * 12}px`,
-            color: drop.isUp ? 'rgba(0, 200, 150, 0.12)' : 'rgba(244, 63, 94, 0.10)',
+            color: drop.isUp ? 'rgba(0, 200, 150, 0.35)' : 'rgba(244, 63, 94, 0.30)',
             animation: `tickerFall ${drop.duration}s linear ${drop.delay}s infinite`,
           }}
         >
