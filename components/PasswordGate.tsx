@@ -48,7 +48,7 @@ function TickerTape() {
       for (let j = 0; j < 12; j++) items.push(generateTicker())
       // Rows closer to center are more visible
       const distFromCenter = Math.abs(i - (rowCount - 1) / 2) / ((rowCount - 1) / 2)
-      const opacity = 0.15 + (1 - distFromCenter) * 0.2
+      const opacity = 0.55 + (1 - distFromCenter) * 0.25
       r.push({
         id: i,
         items,
@@ -76,12 +76,12 @@ function TickerTape() {
           {/* Duplicate items for seamless loop */}
           {[...row.items, ...row.items].map((item, j) => (
             <span key={j} className="inline-flex items-center gap-1.5 text-[11px]"
-              style={{ color: item.isUp ? 'rgba(0, 200, 150, 0.5)' : 'rgba(244, 63, 94, 0.4)' }}
+              style={{ color: item.isUp ? 'rgba(0, 200, 150, 0.85)' : 'rgba(244, 63, 94, 0.75)' }}
             >
               <span className="font-semibold">{item.ticker}</span>
               <span>{item.price}</span>
               <span className="text-[10px]">{item.changeStr}</span>
-              <span className="mx-2 text-white/10">|</span>
+              <span className="mx-2 text-white/20">|</span>
             </span>
           ))}
         </div>
