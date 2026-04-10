@@ -298,9 +298,9 @@ export default function Dashboard({ onGoToImport }: DashboardProps) {
 
 function MetricCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
   return (
-    <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-4 py-3">
+    <div className="glass rounded-xl px-4 py-3">
       <div className="text-xs font-medium text-[var(--text-muted)] mb-1">{label}</div>
-      <div className="text-xl font-bold font-mono" style={{ color }}>{value}</div>
+      <div className="text-xl font-bold font-mono tabular-nums" style={{ color }}>{value}</div>
       {sub && <div className="text-[10px] text-[var(--text-muted)] mt-0.5">{sub}</div>}
     </div>
   )

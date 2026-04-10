@@ -10,6 +10,7 @@ import Watchlist from '@/components/Watchlist'
 import Simulator from '@/components/Simulator'
 import TradeIdeas from '@/components/TradeIdeas'
 import ChatPanel from '@/components/ChatPanel'
+import { ToastProvider, useToast } from '@/components/Toasts'
 import { PortfolioContext } from '@/lib/context'
 import { bjerksundStensland } from '@/lib/blackScholes'
 import type { OptionPosition, ActiveView } from '@/types'
@@ -148,10 +149,11 @@ export default function Home() {
 
   return (
     <PasswordGate>
+      <ToastProvider>
       <PortfolioContext.Provider value={{ positions, setPositions: updatePositions, underlyingPrices }}>
         <div className="min-h-screen flex flex-col">
           {/* Header */}
-          <header className="border-b border-[var(--border)] bg-[var(--bg-surface)] sticky top-0 z-40">
+          <header className="border-b border-[var(--border)] glass sticky top-0 z-40">
             <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-[var(--accent)] rounded-lg flex items-center justify-center text-[var(--bg-base)] font-bold text-sm">
@@ -238,6 +240,7 @@ export default function Home() {
           </footer>
         </div>
       </PortfolioContext.Provider>
+      </ToastProvider>
     </PasswordGate>
   )
 }

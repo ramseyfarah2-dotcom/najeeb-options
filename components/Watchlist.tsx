@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Plus, Trash2, TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react'
+import Sparkline from '@/components/Sparkline'
 import { usePortfolio } from '@/lib/context'
 import type { WatchlistItem } from '@/types'
 
@@ -113,6 +114,37 @@ export default function Watchlist() {
     saveWatchlist(updated)
   }
 
+  // Track price history for sparklines
+  const priceHistoryRef = useRef<Record<string, number[]>>({})
+
+  // Update history when prices change
+  useEffect(() => {
+    for (const item of items) {
+      if (item.currentPrice) {
+        const history = priceHistoryRef.current[item.ticker] || []
+        if (history.length === 0 || history[history.length - 1] !== item.currentPrice) {
+          priceHistoryRef.current[item.ticker] = [...history.slice(-19), item.currentPrice]
+        }
+      }
+    }
+  }, [items])
+
+  // Generate fake intraday sparkline from previousClose → currentPrice
+  const getSparkData = (ticker: string, current: number | null, prev: number | null): number[] => {
+    const history = priceHistoryRef.current[ticker] || []
+    if (history.length >= 3) return history
+    // Generate synthetic data between prev close and current
+    if (!current || !prev) return []
+    const points: number[] = []
+    const steps = 12
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps
+      const noise = (Math.sin(i * 2.5) * 0.003 + Math.cos(i * 1.7) * 0.002) * prev
+      points.push(prev + (current - prev) * t + noise)
+    }
+    return points
+  }
+
   const positionCount = (ticker: string) => positions.filter(p => p.ticker === ticker).length
 
   return (
@@ -168,15 +200,18 @@ export default function Watchlist() {
             const hitTarget = item.priceTarget && item.currentPrice && item.currentPrice >= item.priceTarget
             const posCount = positionCount(item.ticker)
 
+            const sparkData = getSparkData(item.ticker, item.currentPrice, item.previousClose)
+
             return (
               <div key={item.ticker}
-                className={`flex items-center justify-between bg-[var(--bg-surface)] border rounded-xl px-4 py-3 transition ${
-                  hitTarget ? 'border-[var(--warning)] bg-[var(--warning)]/5' : 'border-[var(--border)]'
+                className={`flex items-center justify-between glass rounded-xl px-4 py-3 transition ${
+                  hitTarget ? 'border-[var(--warning)] animate-pulse-glow' : ''
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <div>
                     <div className="flex items-center gap-2">
+                      <span className={`pulse-dot ${change !== null && change >= 0 ? 'pulse-dot-green' : change !== null ? 'pulse-dot-red' : 'pulse-dot-neutral'}`} />
                       <span className="text-sm font-bold text-[var(--text-primary)]">{item.ticker}</span>
                       {posCount > 0 && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--accent)]/10 text-[var(--accent)]">
@@ -186,7 +221,7 @@ export default function Watchlist() {
                     </div>
                     {item.currentPrice ? (
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-lg font-bold font-mono text-[var(--text-primary)]">
+                        <span className="text-lg font-bold font-mono tabular-nums text-[var(--text-primary)]">
                           ${item.currentPrice.toFixed(2)}
                         </span>
                         <span className="flex items-center gap-0.5 text-xs font-semibold" style={{ color: changeColor }}>
@@ -198,6 +233,12 @@ export default function Watchlist() {
                       <span className="text-xs text-[var(--text-muted)]">Loading...</span>
                     )}
                   </div>
+                  {/* Sparkline */}
+                  {sparkData.length >= 2 && (
+                    <div className="hidden sm:block">
+                      <Sparkline data={sparkData} width={72} height={28} />
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3">
