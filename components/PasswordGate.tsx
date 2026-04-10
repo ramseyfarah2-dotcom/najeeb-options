@@ -47,8 +47,8 @@ export default function PasswordGate({ children }: PasswordGateProps) {
           <Lock className="w-6 h-6 text-[var(--accent)]" />
         </div>
         <div className="text-center">
-          <h1 className="text-xl font-bold text-[var(--text-primary)]">Najeeb&apos;s Options</h1>
-          <p className="text-sm text-[var(--text-muted)] mt-1">Enter the passcode to continue</p>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">Welcome, Najeeb</h1>
+          <p className="text-sm text-[var(--text-muted)] mt-1">Enter your passcode to continue</p>
         </div>
         <div className="w-full flex flex-col gap-3">
           <input
