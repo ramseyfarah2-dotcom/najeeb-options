@@ -49,8 +49,7 @@ export default function Step1Import({ onPositionsParsed }: Step1ImportProps) {
     setError(null)
 
     try {
-      const base64 = await fileToBase64(file)
-      const mimeType = file.type || 'image/png'
+      const { base64, mimeType } = await fileToBase64(file)
 
       const res = await fetch('/api/parse-screenshot', {
         method: 'POST',
@@ -199,12 +198,58 @@ export default function Step1Import({ onPositionsParsed }: Step1ImportProps) {
   )
 }
 
-function fileToBase64(file: File): Promise<string> {
+function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
+  const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
+    || file.type === 'image/heic' || file.type === 'image/heif'
+
+  if (isHeic) {
+    // HEIC: draw to canvas via createImageBitmap to convert to PNG
+    return file.arrayBuffer()
+      .then(buf => createImageBitmap(new Blob([buf])))
+      .then(bitmap => {
+        const canvas = document.createElement('canvas')
+        canvas.width = bitmap.width
+        canvas.height = bitmap.height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(bitmap, 0, 0)
+        const dataUrl = canvas.toDataURL('image/png')
+        return { base64: dataUrl.split(',')[1], mimeType: 'image/png' }
+      })
+      .catch(() => {
+        // Fallback: send raw and hope for the best
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => {
+            resolve({ base64: (reader.result as string).split(',')[1], mimeType: 'image/png' })
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
+      })
+  }
+
+  // Non-HEIC: resize if large, convert to PNG via canvas
   return new Promise((resolve, reject) => {
+    const img = new Image()
     const reader = new FileReader()
     reader.onload = () => {
-      const result = reader.result as string
-      resolve(result.split(',')[1])
+      img.onload = () => {
+        const MAX_WIDTH = 2000
+        let { width, height } = img
+        if (width > MAX_WIDTH) {
+          height = Math.round(height * (MAX_WIDTH / width))
+          width = MAX_WIDTH
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, width, height)
+        const dataUrl = canvas.toDataURL('image/png')
+        resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/png' })
+      }
+      img.onerror = reject
+      img.src = reader.result as string
     }
     reader.onerror = reject
     reader.readAsDataURL(file)
