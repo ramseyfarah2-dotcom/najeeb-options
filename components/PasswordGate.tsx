@@ -1,7 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, createContext, useContext } from 'react'
 import { Lock, ArrowRight } from 'lucide-react'
+
+const AuthContext = createContext<{ logout: () => void }>({ logout: () => {} })
+export function useAuth() { return useContext(AuthContext) }
 
 interface PasswordGateProps {
   children: React.ReactNode
@@ -27,11 +30,19 @@ export default function PasswordGate({ children }: PasswordGateProps) {
     }
   }
 
-  if (unlocked) return <>{children}</>
+  const logout = () => {
+    sessionStorage.removeItem('na-unlocked')
+    setUnlocked(false)
+    setInput('')
+  }
+
+  if (unlocked) {
+    return <AuthContext.Provider value={{ logout }}>{children}</AuthContext.Provider>
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)] px-4">
-      <div className="w-full max-w-sm flex flex-col items-center gap-6">
+      <div className="w-full max-w-sm flex flex-col items-center gap-6 animate-fadeIn">
         <div className="w-14 h-14 bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-2xl flex items-center justify-center">
           <Lock className="w-6 h-6 text-[var(--accent)]" />
         </div>
@@ -43,7 +54,7 @@ export default function PasswordGate({ children }: PasswordGateProps) {
           <input
             type="password"
             className={`w-full bg-[var(--bg-elevated)] border rounded-lg px-4 py-3 text-center text-lg font-mono tracking-widest text-[var(--text-primary)] focus:outline-none transition ${
-              error ? 'border-[var(--danger)] shake' : 'border-[var(--border)] focus:border-[var(--accent)]'
+              error ? 'border-[var(--danger)]' : 'border-[var(--border)] focus:border-[var(--accent)]'
             }`}
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -53,7 +64,7 @@ export default function PasswordGate({ children }: PasswordGateProps) {
           />
           <button
             onClick={submit}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--accent)] text-[var(--bg-base)] font-semibold rounded-lg hover:brightness-110 transition"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--accent)] text-[var(--bg-base)] font-semibold rounded-lg hover:brightness-110 transition active:scale-[0.97]"
           >
             Enter <ArrowRight className="w-4 h-4" />
           </button>

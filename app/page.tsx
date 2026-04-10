@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
-import PasswordGate from '@/components/PasswordGate'
+import PasswordGate, { useAuth } from '@/components/PasswordGate'
+import QuoteBanner from '@/components/QuoteBanner'
 import NavBar from '@/components/NavBar'
 import ThemeToggle from '@/components/ThemeToggle'
 import ImportWizard from '@/components/ImportWizard'
@@ -14,7 +15,7 @@ import { ToastProvider, useToast } from '@/components/Toasts'
 import { PortfolioContext } from '@/lib/context'
 import { bjerksundStensland } from '@/lib/blackScholes'
 import type { OptionPosition, ActiveView } from '@/types'
-import { RefreshCw, Save, Clock } from 'lucide-react'
+import { RefreshCw, Clock, LogOut } from 'lucide-react'
 
 function loadSavedPositions(): OptionPosition[] {
   if (typeof window === 'undefined') return []
@@ -35,6 +36,17 @@ function getSavedAt(): string | null {
 }
 
 export default function Home() {
+  return (
+    <PasswordGate>
+      <ToastProvider>
+        <AppInner />
+      </ToastProvider>
+    </PasswordGate>
+  )
+}
+
+function AppInner() {
+  const { logout } = useAuth()
   const [activeView, setActiveView] = useState<ActiveView>('import')
   const [positions, setPositions] = useState<OptionPosition[]>([])
   const [lastSaved, setLastSaved] = useState<string | null>(null)
@@ -148,8 +160,6 @@ export default function Home() {
   }
 
   return (
-    <PasswordGate>
-      <ToastProvider>
       <PortfolioContext.Provider value={{ positions, setPositions: updatePositions, underlyingPrices }}>
         <div className="min-h-screen flex flex-col">
           {/* Header */}
@@ -206,9 +216,19 @@ export default function Home() {
                 />
                 <div className="hidden sm:block w-px h-6 bg-[var(--border)]" />
                 <ThemeToggle />
+                <button
+                  onClick={logout}
+                  className="p-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/5 transition active:scale-95"
+                  title="Log out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </header>
+
+          {/* Quote banner */}
+          <QuoteBanner />
 
           {/* Main content */}
           <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8 pb-24 sm:pb-8">
@@ -240,7 +260,5 @@ export default function Home() {
           </footer>
         </div>
       </PortfolioContext.Provider>
-      </ToastProvider>
-    </PasswordGate>
   )
 }
