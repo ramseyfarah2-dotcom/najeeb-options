@@ -1,11 +1,12 @@
 'use client'
 
-import { LayoutDashboard, Upload, Eye, Lightbulb } from 'lucide-react'
+import { LayoutDashboard, Upload, Eye, Lightbulb, Grid3x3 } from 'lucide-react'
 import type { ActiveView } from '@/types'
 
 const NAV_ITEMS: { view: ActiveView; icon: typeof LayoutDashboard; label: string }[] = [
   { view: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { view: 'import', icon: Upload, label: 'Import' },
+  { view: 'simulator', icon: Grid3x3, label: 'Simulator' },
   { view: 'watchlist', icon: Eye, label: 'Watchlist' },
   { view: 'trade-ideas', icon: Lightbulb, label: 'Ideas' },
 ]
@@ -23,7 +24,7 @@ export default function NavBar({ activeView, onViewChange, hasPositions }: NavBa
       <nav className="hidden sm:flex items-center gap-1">
         {NAV_ITEMS.map(({ view, icon: Icon, label }) => {
           const isActive = activeView === view
-          const isDisabled = view === 'dashboard' && !hasPositions
+          const isDisabled = (view === 'dashboard' || view === 'simulator') && !hasPositions
           return (
             <button
               key={view}
@@ -48,7 +49,7 @@ export default function NavBar({ activeView, onViewChange, hasPositions }: NavBa
       <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-surface)] border-t border-[var(--border)] flex">
         {NAV_ITEMS.map(({ view, icon: Icon, label }) => {
           const isActive = activeView === view
-          const isDisabled = view === 'dashboard' && !hasPositions
+          const isDisabled = (view === 'dashboard' || view === 'simulator') && !hasPositions
           return (
             <button
               key={view}

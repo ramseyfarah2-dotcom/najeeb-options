@@ -7,6 +7,7 @@ import ThemeToggle from '@/components/ThemeToggle'
 import ImportWizard from '@/components/ImportWizard'
 import Dashboard from '@/components/Dashboard'
 import Watchlist from '@/components/Watchlist'
+import Simulator from '@/components/Simulator'
 import TradeIdeas from '@/components/TradeIdeas'
 import ChatPanel from '@/components/ChatPanel'
 import { PortfolioContext } from '@/lib/context'
@@ -217,6 +218,9 @@ export default function Home() {
                 <ImportWizard
                   onPositionsReady={() => setActiveView('dashboard')}
                 />
+              )}
+              {activeView === 'simulator' && (
+                <Simulator onGoToImport={() => setActiveView('import')} />
               )}
               {activeView === 'watchlist' && <Watchlist />}
               {activeView === 'trade-ideas' && <TradeIdeas />}
