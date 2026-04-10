@@ -30,51 +30,60 @@ function generateTicker() {
   return { ticker, price, changeStr, isUp }
 }
 
-interface RainDrop {
+interface TickerRow {
   id: number
-  ticker: string
-  price: string
-  changeStr: string
-  isUp: boolean
-  left: number    // % from left
-  delay: number   // animation delay in seconds
-  duration: number // animation duration in seconds
-  size: number    // font size multiplier
+  items: { ticker: string; price: string; changeStr: string; isUp: boolean }[]
+  top: number       // % from top
+  duration: number  // scroll duration
+  reverse: boolean  // scroll direction
+  opacity: number
 }
 
-function TickerRain() {
-  const drops = useMemo(() => {
-    const d: RainDrop[] = []
-    for (let i = 0; i < 30; i++) {
-      const t = generateTicker()
-      d.push({
+function TickerTape() {
+  const rows = useMemo(() => {
+    const r: TickerRow[] = []
+    const rowCount = 8
+    for (let i = 0; i < rowCount; i++) {
+      const items = []
+      for (let j = 0; j < 12; j++) items.push(generateTicker())
+      // Rows closer to center are more visible
+      const distFromCenter = Math.abs(i - (rowCount - 1) / 2) / ((rowCount - 1) / 2)
+      const opacity = 0.15 + (1 - distFromCenter) * 0.2
+      r.push({
         id: i,
-        ...t,
-        left: Math.random() * 95,
-        delay: Math.random() * 20,
-        duration: 15 + Math.random() * 20,
-        size: 0.6 + Math.random() * 0.4,
+        items,
+        top: 8 + (i * 84) / (rowCount - 1),
+        duration: 40 + Math.random() * 30,
+        reverse: i % 2 === 1,
+        opacity,
       })
     }
-    return d
+    return r
   }, [])
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {drops.map(drop => (
+      {rows.map(row => (
         <div
-          key={drop.id}
-          className="absolute whitespace-nowrap font-mono"
+          key={row.id}
+          className="absolute whitespace-nowrap font-mono flex gap-8"
           style={{
-            left: `${drop.left}%`,
-            fontSize: `${drop.size * 12}px`,
-            color: drop.isUp ? 'rgba(0, 200, 150, 0.35)' : 'rgba(244, 63, 94, 0.30)',
-            animation: `tickerFall ${drop.duration}s linear ${drop.delay}s infinite`,
+            top: `${row.top}%`,
+            opacity: row.opacity,
+            animation: `${row.reverse ? 'tickerScrollRight' : 'tickerScrollLeft'} ${row.duration}s linear infinite`,
           }}
         >
-          <span className="font-semibold">{drop.ticker}</span>{' '}
-          <span>{drop.price}</span>{' '}
-          <span>{drop.changeStr}</span>
+          {/* Duplicate items for seamless loop */}
+          {[...row.items, ...row.items].map((item, j) => (
+            <span key={j} className="inline-flex items-center gap-1.5 text-[11px]"
+              style={{ color: item.isUp ? 'rgba(0, 200, 150, 0.5)' : 'rgba(244, 63, 94, 0.4)' }}
+            >
+              <span className="font-semibold">{item.ticker}</span>
+              <span>{item.price}</span>
+              <span className="text-[10px]">{item.changeStr}</span>
+              <span className="mx-2 text-white/10">|</span>
+            </span>
+          ))}
         </div>
       ))}
     </div>
@@ -111,8 +120,8 @@ export default function PasswordGate({ children }: PasswordGateProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#060608] px-4 relative overflow-hidden">
-      {/* Ticker rain background */}
-      <TickerRain />
+      {/* Ticker tape background */}
+      <TickerTape />
 
       {/* Gradient overlay for depth */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#060608]/60 to-[#060608]" />
