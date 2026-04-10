@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// In-memory cache: ticker → { price, timestamp }
-const priceCache = new Map<string, { price: number; ts: number }>()
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+interface CacheEntry {
+  price: number
+  previousClose: number | null
+  ts: number
+}
+
+const priceCache = new Map<string, CacheEntry>()
+const CACHE_TTL = 60 * 1000 // 1 minute for watchlist freshness
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +18,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Provide at least one ticker' }, { status: 400 })
     }
 
-    const prices: Record<string, number | null> = {}
+    const prices: Record<string, { price: number | null; previousClose: number | null }> = {}
     const now = Date.now()
 
     await Promise.allSettled(
@@ -21,32 +26,32 @@ export async function POST(request: NextRequest) {
         const ticker = rawTicker.toUpperCase().trim()
         if (!ticker) return
 
-        // Check cache
         const cached = priceCache.get(ticker)
         if (cached && now - cached.ts < CACHE_TTL) {
-          prices[ticker] = cached.price
+          prices[ticker] = { price: cached.price, previousClose: cached.previousClose }
           return
         }
 
         try {
           const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`
-          const res = await fetch(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0' },
-          })
+          const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } })
           if (!res.ok) {
-            prices[ticker] = null
+            prices[ticker] = { price: null, previousClose: null }
             return
           }
           const data = await res.json()
-          const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice
+          const meta = data?.chart?.result?.[0]?.meta
+          const price = meta?.regularMarketPrice
+          const previousClose = meta?.chartPreviousClose ?? meta?.previousClose ?? null
+
           if (typeof price === 'number' && price > 0) {
-            prices[ticker] = price
-            priceCache.set(ticker, { price, ts: now })
+            prices[ticker] = { price, previousClose }
+            priceCache.set(ticker, { price, previousClose, ts: now })
           } else {
-            prices[ticker] = null
+            prices[ticker] = { price: null, previousClose: null }
           }
         } catch {
-          prices[ticker] = null
+          prices[ticker] = { price: null, previousClose: null }
         }
       })
     )

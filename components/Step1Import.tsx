@@ -91,8 +91,9 @@ export default function Step1Import({ onPositionsParsed }: Step1ImportProps) {
           if (priceRes.ok) {
             const { prices } = await priceRes.json()
             for (const pos of positions) {
-              if (!pos.underlyingPrice && prices[pos.ticker]) {
-                pos.underlyingPrice = prices[pos.ticker]
+              const priceData = prices[pos.ticker]
+              if (!pos.underlyingPrice && priceData?.price) {
+                pos.underlyingPrice = priceData.price
               }
             }
           }
