@@ -40,3 +40,27 @@ export interface HeatmapCell {
   daysForward: number
   pnl: number
 }
+
+// Navigation
+export type ActiveView = 'dashboard' | 'import' | 'watchlist' | 'trade-ideas'
+
+// Watchlist
+export interface WatchlistItem {
+  ticker: string
+  currentPrice: number | null
+  previousClose: number | null
+  priceTarget: number | null
+  addedAt: string
+  isFromPositions: boolean
+}
+
+// Chat
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: number
+}
+
+// Theme
+export type Theme = 'dark' | 'light'
