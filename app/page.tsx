@@ -8,6 +8,7 @@ import ImportWizard from '@/components/ImportWizard'
 import Dashboard from '@/components/Dashboard'
 import Watchlist from '@/components/Watchlist'
 import TradeIdeas from '@/components/TradeIdeas'
+import ChatPanel from '@/components/ChatPanel'
 import { PortfolioContext } from '@/lib/context'
 import type { OptionPosition, ActiveView } from '@/types'
 
@@ -75,6 +76,9 @@ export default function Home() {
               {activeView === 'trade-ideas' && <TradeIdeas />}
             </div>
           </main>
+
+          {/* Chat FAB */}
+          <ChatPanel />
 
           {/* Footer */}
           <footer className="border-t border-[var(--border)] py-4 hidden sm:block">
