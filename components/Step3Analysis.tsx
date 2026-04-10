@@ -128,7 +128,7 @@ export default function Step3Analysis({ positions, onBack, onNext }: Step3Analys
   return (
     <div className="flex flex-col gap-6">
       {/* Summary bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-stagger">
         <MetricCard label="Dollar Delta" value={fmt(portGreeks.dollarDelta)} sub="per $1 stock move" color={portGreeks.dollarDelta >= 0 ? 'var(--accent)' : 'var(--danger)'} />
         <MetricCard label="Daily Theta" value={fmt(portGreeks.dollarTheta)} sub="per day" color={portGreeks.dollarTheta >= 0 ? 'var(--accent)' : 'var(--danger)'} />
         <MetricCard label="Nearest Expiry" value={`${nearestExpiry}d`} sub="days to expiry" color="var(--warning)" />
@@ -184,6 +184,7 @@ export default function Step3Analysis({ positions, onBack, onNext }: Step3Analys
               <Line key={label} type="monotone" dataKey={label}
                 stroke={LINE_COLORS[i]} strokeWidth={i === timeLabels.length - 1 ? 2.5 : 1.5}
                 strokeDasharray={LINE_DASHES[i]} dot={false} activeDot={{ r: 4, strokeWidth: 0 }}
+                animationDuration={800} animationEasing="ease-out"
               />
             ))}
             <ReferenceLine y={0} stroke="var(--text-muted)" strokeWidth={1} strokeDasharray="4 4" />

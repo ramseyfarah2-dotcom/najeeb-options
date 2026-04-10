@@ -160,7 +160,7 @@ export default function Dashboard({ onGoToImport }: DashboardProps) {
   return (
     <div className="flex flex-col gap-5 animate-fadeIn">
       {/* Value Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-stagger">
         <MetricCard label="Portfolio Value" value={fmt(totalValue)} color="var(--text-primary)" />
         <MetricCard label="Unrealized P&L" value={fmt(unrealizedPnl)} color={unrealizedPnl >= 0 ? 'var(--accent)' : 'var(--danger)'} />
         <MetricCard label="Daily Theta" value={fmt(greeks.dollarTheta)} sub="per day" color={greeks.dollarTheta >= 0 ? 'var(--accent)' : 'var(--danger)'} />
