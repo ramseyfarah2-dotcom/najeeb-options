@@ -81,11 +81,15 @@ export default function ChatPanel() {
   const [loading, setLoading] = useState(false)
   const [listening, setListening] = useState(false)
   const [speaking, setSpeaking] = useState(false)
+  const [paused, setPaused] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null)
+  const speechQueueRef = useRef<string[]>([])
+  const spokenSoFarRef = useRef('')
+  const isSpeakingRef = useRef(false)
   const { positions, underlyingPrices } = usePortfolio()
 
   useEffect(() => {
@@ -96,35 +100,112 @@ export default function ChatPanel() {
     if (isOpen && !listening) inputRef.current?.focus()
   }, [isOpen, listening])
 
-  // Text-to-speech
-  const speak = useCallback((text: string) => {
-    if (!voiceEnabled || typeof window === 'undefined' || !window.speechSynthesis) return
-    window.speechSynthesis.cancel()
-    // Clean markdown-like formatting for speech
-    const clean = text
-      .replace(/\*\*/g, '')
-      .replace(/#{1,4}\s/g, '')
-      .replace(/\[.*?\]\(.*?\)/g, '')
-      .replace(/`/g, '')
-      .slice(0, 2000) // Limit length
+  // Clean text for speech
+  const cleanForSpeech = (text: string) => text
+    .replace(/\*\*/g, '').replace(/#{1,4}\s/g, '').replace(/\[.*?\]\(.*?\)/g, '')
+    .replace(/`/g, '').replace(/\n{2,}/g, '. ').replace(/\n/g, ' ')
 
-    const utterance = new SpeechSynthesisUtterance(clean)
-    utterance.rate = 0.95
-    utterance.pitch = 0.9
-
-    // Try to get a good voice
+  // Get a warm, kind voice
+  const getVoice = useCallback(() => {
+    if (typeof window === 'undefined') return null
     const voices = window.speechSynthesis.getVoices()
-    const preferred = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
-      || voices.find(v => v.name.includes('Samantha'))
-      || voices.find(v => v.lang.startsWith('en') && v.localService)
-    if (preferred) utterance.voice = preferred
+    // Prefer warm female voices
+    return voices.find(v => v.name.includes('Samantha'))
+      || voices.find(v => v.name.includes('Karen'))
+      || voices.find(v => v.name.includes('Google UK English Female'))
+      || voices.find(v => v.name.includes('Google US English') && !v.name.includes('Male'))
+      || voices.find(v => v.name.includes('Microsoft Zira'))
+      || voices.find(v => v.name.includes('Female') && v.lang.startsWith('en'))
+      || voices.find(v => v.lang.startsWith('en'))
+      || null
+  }, [])
 
-    utterance.onstart = () => setSpeaking(true)
-    utterance.onend = () => setSpeaking(false)
-    utterance.onerror = () => setSpeaking(false)
+  // Speak a single sentence
+  const speakSentence = useCallback((text: string): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!text.trim() || typeof window === 'undefined') { resolve(); return }
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.rate = 0.92
+      utterance.pitch = 1.05  // Slightly higher = warmer/kinder
+      utterance.volume = 1.0
+      const voice = getVoice()
+      if (voice) utterance.voice = voice
+      utterance.onend = () => resolve()
+      utterance.onerror = () => resolve()
+      window.speechSynthesis.speak(utterance)
+    })
+  }, [getVoice])
 
-    window.speechSynthesis.speak(utterance)
-  }, [voiceEnabled])
+  // Process speech queue — speaks sentences as they arrive
+  const processSpeechQueue = useCallback(async () => {
+    if (isSpeakingRef.current) return
+    isSpeakingRef.current = true
+    setSpeaking(true)
+
+    while (speechQueueRef.current.length > 0) {
+      const sentence = speechQueueRef.current.shift()!
+      await speakSentence(sentence)
+    }
+
+    isSpeakingRef.current = false
+    setSpeaking(false)
+  }, [speakSentence])
+
+  // Queue new text for speaking (called as streaming chunks arrive)
+  const queueSpeech = useCallback((fullText: string) => {
+    if (!voiceEnabled || typeof window === 'undefined' || !window.speechSynthesis) return
+    const clean = cleanForSpeech(fullText)
+    const alreadySpoken = spokenSoFarRef.current
+    const newText = clean.slice(alreadySpoken.length)
+
+    // Split on sentence boundaries
+    const sentenceEnders = /(?<=[.!?])\s+/
+    const parts = newText.split(sentenceEnders)
+
+    // Only queue complete sentences (keep the last incomplete part for later)
+    if (parts.length > 1) {
+      const completeSentences = parts.slice(0, -1)
+      for (const s of completeSentences) {
+        if (s.trim()) speechQueueRef.current.push(s.trim())
+      }
+      spokenSoFarRef.current = clean.slice(0, clean.length - parts[parts.length - 1].length)
+      processSpeechQueue()
+    }
+  }, [voiceEnabled, processSpeechQueue])
+
+  // Flush remaining text when streaming is done
+  const flushSpeech = useCallback((fullText: string) => {
+    if (!voiceEnabled || typeof window === 'undefined') return
+    const clean = cleanForSpeech(fullText)
+    const remaining = clean.slice(spokenSoFarRef.current.length).trim()
+    if (remaining) {
+      speechQueueRef.current.push(remaining)
+      processSpeechQueue()
+    }
+    spokenSoFarRef.current = ''
+  }, [voiceEnabled, processSpeechQueue])
+
+  // Pause / Resume
+  const togglePause = useCallback(() => {
+    if (!window.speechSynthesis) return
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume()
+      setPaused(false)
+    } else if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.pause()
+      setPaused(true)
+    }
+  }, [])
+
+  // Stop all speech
+  const stopSpeech = useCallback(() => {
+    speechQueueRef.current = []
+    spokenSoFarRef.current = ''
+    isSpeakingRef.current = false
+    window.speechSynthesis?.cancel()
+    setSpeaking(false)
+    setPaused(false)
+  }, [])
 
   // Speech recognition
   const startListening = useCallback(() => {
@@ -184,6 +265,8 @@ export default function ChatPanel() {
     setMessages(prev => [...prev, userMsg, assistantMsg])
     setInput('')
     setLoading(true)
+    spokenSoFarRef.current = ''
+    speechQueueRef.current = []
 
     let fullResponse = ''
 
@@ -213,12 +296,12 @@ export default function ChatPanel() {
         setMessages(prev =>
           prev.map(m => m.id === assistantMsg.id ? { ...m, content: m.content + chunk } : m)
         )
+        // Stream speech as sentences complete
+        queueSpeech(fullResponse)
       }
 
-      // Speak the response
-      if (voiceEnabled && fullResponse) {
-        speak(fullResponse)
-      }
+      // Flush any remaining unspoken text
+      flushSpeech(fullResponse)
     } catch (err) {
       const errorMsg = `Error: ${err instanceof Error ? err.message : 'Something went wrong'}`
       setMessages(prev =>
@@ -227,7 +310,7 @@ export default function ChatPanel() {
     } finally {
       setLoading(false)
     }
-  }, [input, loading, messages, positions, underlyingPrices, voiceEnabled, speak])
+  }, [input, loading, messages, positions, underlyingPrices, queueSpeech, flushSpeech])
 
   // Auto-send after voice input finishes
   const prevListening = useRef(listening)
@@ -271,19 +354,45 @@ export default function ChatPanel() {
               <div>
                 <p className="text-sm font-semibold text-[var(--text-primary)]">Wall St. Bull</p>
                 <p className="text-[10px] text-[var(--text-muted)]">
-                  {speaking ? '🔊 Speaking...' : listening ? '🎤 Listening...' : loading ? '🤔 Thinking...' : 'Your trading assistant'}
+                  {paused ? '⏸ Paused' : speaking ? '🔊 Speaking...' : listening ? '🎤 Listening...' : loading ? '🤔 Thinking...' : 'Your trading assistant'}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
+              {/* Pause/Resume when speaking */}
+              {speaking && (
+                <button
+                  onClick={togglePause}
+                  className="p-1.5 rounded-lg text-[var(--accent)] hover:bg-[var(--accent)]/10 transition"
+                  title={paused ? 'Resume' : 'Pause'}
+                >
+                  {paused ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                  )}
+                </button>
+              )}
+              {/* Stop speaking */}
+              {speaking && (
+                <button
+                  onClick={stopSpeech}
+                  className="p-1.5 rounded-lg text-[var(--danger)] hover:bg-[var(--danger)]/10 transition"
+                  title="Stop speaking"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+                </button>
+              )}
+              {/* Mute toggle */}
               <button
-                onClick={() => { setVoiceEnabled(!voiceEnabled); if (speaking) { window.speechSynthesis?.cancel(); setSpeaking(false) } }}
+                onClick={() => { setVoiceEnabled(!voiceEnabled); if (speaking) stopSpeech() }}
                 className={`p-1.5 rounded-lg transition ${voiceEnabled ? 'text-[var(--accent)] hover:bg-[var(--accent)]/10' : 'text-[var(--text-muted)] hover:bg-[var(--bg-elevated)]'}`}
                 title={voiceEnabled ? 'Mute voice' : 'Enable voice'}
               >
                 {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </button>
-              <button onClick={() => { setIsOpen(false); window.speechSynthesis?.cancel(); setSpeaking(false) }} className="p-1.5 rounded-lg hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] transition">
+              {/* Close */}
+              <button onClick={() => { setIsOpen(false); stopSpeech() }} className="p-1.5 rounded-lg hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] transition">
                 <X className="w-5 h-5" />
               </button>
             </div>
