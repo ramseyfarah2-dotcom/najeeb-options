@@ -198,37 +198,24 @@ export default function Step1Import({ onPositionsParsed }: Step1ImportProps) {
   )
 }
 
-function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
+async function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
   const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
     || file.type === 'image/heic' || file.type === 'image/heif'
 
+  let imageFile = file
+
+  // Convert HEIC to JPEG using heic2any (dynamic import to avoid SSR window error)
   if (isHeic) {
-    // HEIC: draw to canvas via createImageBitmap to convert to PNG
-    return file.arrayBuffer()
-      .then(buf => createImageBitmap(new Blob([buf])))
-      .then(bitmap => {
-        const canvas = document.createElement('canvas')
-        canvas.width = bitmap.width
-        canvas.height = bitmap.height
-        const ctx = canvas.getContext('2d')!
-        ctx.drawImage(bitmap, 0, 0)
-        const dataUrl = canvas.toDataURL('image/png')
-        return { base64: dataUrl.split(',')[1], mimeType: 'image/png' }
-      })
-      .catch(() => {
-        // Fallback: send raw and hope for the best
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => {
-            resolve({ base64: (reader.result as string).split(',')[1], mimeType: 'image/png' })
-          }
-          reader.onerror = reject
-          reader.readAsDataURL(file)
-        })
-      })
+    const heic2any = (await import('heic2any')).default
+    const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 })
+    imageFile = new File(
+      [Array.isArray(blob) ? blob[0] : blob],
+      file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'),
+      { type: 'image/jpeg' }
+    )
   }
 
-  // Non-HEIC: resize if large, convert to PNG via canvas
+  // Resize via canvas and encode as JPEG
   return new Promise((resolve, reject) => {
     const img = new Image()
     const reader = new FileReader()
@@ -245,13 +232,13 @@ function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }>
         canvas.height = height
         const ctx = canvas.getContext('2d')!
         ctx.drawImage(img, 0, 0, width, height)
-        const dataUrl = canvas.toDataURL('image/png')
-        resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/png' })
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9)
+        resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' })
       }
       img.onerror = reject
       img.src = reader.result as string
     }
     reader.onerror = reject
-    reader.readAsDataURL(file)
+    reader.readAsDataURL(imageFile)
   })
 }
